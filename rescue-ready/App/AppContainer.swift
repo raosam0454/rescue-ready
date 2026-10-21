@@ -57,6 +57,12 @@ final class AppContainer {
         )
     }
 
+    func makeImpactViewModel() -> ImpactViewModel {
+        ImpactViewModel(
+            computeImpactStats: ComputeImpactStatsUseCase(batches: batchRepository, dropPoints: dropPointRepository)
+        )
+    }
+
     // MARK: - Previews
 
     /// An in-memory container for SwiftUI previews.
