@@ -28,12 +28,8 @@ struct RootView: View {
             PickupLogView(viewModel: container.makePickupViewModel())
                 .tabItem { Label("Log Pickup", systemImage: "plus.circle") }
 
-            UpcomingFeatureView(
-                title: "Impact",
-                systemImage: "chart.bar",
-                message: "Food saved and meals delivered will appear here."
-            )
-            .tabItem { Label("Impact", systemImage: "chart.bar") }
+            ImpactDashboardView(viewModel: container.makeImpactViewModel())
+                .tabItem { Label("Impact", systemImage: "chart.bar") }
         }
     }
 }
