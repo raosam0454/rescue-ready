@@ -48,6 +48,22 @@ final class AppContainer {
 
     // MARK: - ViewModel factories
 
+    func makeSafetyCheckViewModel(
+        for batch: FoodBatch
+    ) -> SafetyCheckViewModel {
+
+        let useCase = RecordSafetyCheckUseCase(
+            batches: batchRepository,
+            now: now,
+            assessor: FoodSafetyAssessor()
+        )
+
+        return SafetyCheckViewModel(
+            recordSafetyCheck: useCase,
+            batchID: batch.id
+        )
+    }
+    
     func makeBatchListViewModel() -> BatchListViewModel {
         BatchListViewModel(
             fetchExpiringBatches: FetchExpiringBatchesUseCase(batches: batchRepository, now: now),
