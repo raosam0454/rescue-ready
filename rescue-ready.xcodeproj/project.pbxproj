@@ -68,11 +68,41 @@
 			);
 			target = 3753414A30856D0A00F043C9 /* RescueReadyWidgetExtension */;
 		};
+		3753443B3089A2B000F043C9 /* Exceptions for "rescue-ready" folder in "RescueReadyWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Data/CoreData/EntityMapping.swift,
+				"Data/CoreData/NSPersistentContainer+Background.swift",
+				Data/CoreData/PersistenceController.swift,
+				Data/CoreData/rescue_ready.xcdatamodeld,
+				Data/Repositories/CoreDataBatchRepository.swift,
+				Domain/Errors/DomainError.swift,
+				Domain/Errors/RepositoryError.swift,
+				Domain/Models/Allergen.swift,
+				Domain/Models/BatchStatus.swift,
+				Domain/Models/DropPoint.swift,
+				Domain/Models/Event.swift,
+				Domain/Models/FoodBatch.swift,
+				Domain/Models/HoldWindow.swift,
+				Domain/Models/Identifier.swift,
+				Domain/Models/Pickup.swift,
+				Domain/Models/SafetyCheck.swift,
+				Domain/Models/Temperature.swift,
+				Domain/Models/Volunteer.swift,
+				Domain/Models/Weight.swift,
+				Domain/Repositories/BatchRepository.swift,
+				Domain/UseCases/FetchExpiringBatchesUseCase.swift,
+			);
+			target = 3753414A30856D0A00F043C9 /* RescueReadyWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		375341093082D67200F043C9 /* rescue-ready */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3753443B3089A2B000F043C9 /* Exceptions for "rescue-ready" folder in "RescueReadyWidgetExtension" target */,
+			);
 			path = "rescue-ready";
 			sourceTree = "<group>";
 		};

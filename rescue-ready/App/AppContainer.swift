@@ -28,17 +28,16 @@ final class AppContainer {
         if persistence.isAvailable {
             eventRepository = CoreDataEventRepository(container: persistence.container)
             pickupRepository = CoreDataPickupRepository(container: persistence.container)
+            batchRepository = CoreDataBatchRepository(container: persistence.container)
+            dropPointRepository = CoreDataDropPointRepository(container: persistence.container)
         } else {
             eventRepository = InMemoryEventRepository(store: fallbackStore)
             pickupRepository = InMemoryPickupRepository(store: fallbackStore)
+            batchRepository = InMemoryBatchRepository(store: fallbackStore)
+            dropPointRepository = InMemoryDropPointRepository(store: fallbackStore)
         }
 
-        // TODO(persistence): replace with CoreDataBatchRepository and CoreDataDropPointRepository.
-        batchRepository = InMemoryBatchRepository(store: fallbackStore)
-        dropPointRepository = InMemoryDropPointRepository(store: fallbackStore)
-
-        // TODO(platform): replace with the UserNotifications-backed scheduler.
-        notificationScheduler = InMemoryNotificationScheduler()
+        notificationScheduler = UNNotificationScheduler()
     }
 
     /// Seeds an empty store with sample data so the app has content on first launch.
@@ -49,11 +48,29 @@ final class AppContainer {
 
     // MARK: - ViewModel factories
 
+    func makeBatchListViewModel() -> BatchListViewModel {
+        BatchListViewModel(
+            fetchExpiringBatches: FetchExpiringBatchesUseCase(batches: batchRepository, now: now),
+            notifications: notificationScheduler
+        )
+    }
+
     func makePickupViewModel() -> PickupViewModel {
         PickupViewModel(
             logPickup: LogPickupUseCase(events: eventRepository, pickups: pickupRepository, now: now),
             fetchActiveEvents: FetchActiveEventsUseCase(events: eventRepository, now: now),
             volunteerID: currentVolunteerID
+        )
+    }
+
+    func makeHandoverViewModel(for batch: FoodBatch) -> HandoverViewModel {
+        HandoverViewModel(
+            batch: batch,
+            handOver: HandOverBatchUseCase(batches: batchRepository, dropPoints: dropPointRepository,
+                                           notifications: notificationScheduler, now: now),
+            discard: DiscardBatchUseCase(batches: batchRepository, notifications: notificationScheduler),
+            fetchDropPoints: FetchDropPointsUseCase(dropPoints: dropPointRepository, now: now),
+            now: now
         )
     }
 

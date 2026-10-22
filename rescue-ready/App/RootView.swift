@@ -21,12 +21,9 @@ struct RootView: View {
 
     private var tabs: some View {
         TabView {
-            UpcomingFeatureView(
-                title: "Batches",
-                systemImage: "tray.full",
-                message: "Open batches and the time left on each will appear here."
-            )
-            .tabItem { Label("Batches", systemImage: "tray.full") }
+            BatchListView(viewModel: container.makeBatchListViewModel(),
+                          makeHandoverViewModel: container.makeHandoverViewModel)
+                .tabItem { Label("Batches", systemImage: "tray.full") }
 
             PickupLogView(viewModel: container.makePickupViewModel())
                 .tabItem { Label("Log Pickup", systemImage: "plus.circle") }
