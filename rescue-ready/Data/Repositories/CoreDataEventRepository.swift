@@ -14,6 +14,14 @@ final class CoreDataEventRepository: EventRepository {
         }
     }
 
+    func save(_ event: Event) async throws {
+        try await container.performBackground(failure: .saveFailed) { context in
+            let entity = try context.fetchOne(EventEntity.self, id: event.id.rawValue) ?? EventEntity(context: context)
+            entity.update(from: event)
+            try context.save()
+        }
+    }
+
     func events(acceptingPickupsAt date: Date) async throws -> [Event] {
         try await container.performBackground(failure: .fetchFailed) { context in
             // Same rule as Event.acceptsPickups(at:), expressed as a store query.

@@ -5,6 +5,10 @@ enum DomainError: Error, Equatable, LocalizedError {
     // Pickup
     case eventNotFound
     case eventNotActive
+    case missingEventName
+    case missingVenue
+    case invalidEventTimes
+    case eventAlreadyFinished
     case noBatches
     case missingFoodDescription
     case invalidWeight
@@ -36,6 +40,14 @@ enum DomainError: Error, Equatable, LocalizedError {
             return "This event could not be found."
         case .eventNotActive:
             return "This event isn't accepting pickups right now."
+        case .missingEventName:
+            return "Enter the event's name."
+        case .missingVenue:
+            return "Enter where the event is."
+        case .invalidEventTimes:
+            return "The event must end after it starts and last no more than 24 hours."
+        case .eventAlreadyFinished:
+            return "This event finished more than 3 hours ago, so pickups can no longer be logged for it."
         case .noBatches:
             return "Add at least one batch before saving the pickup."
         case .missingFoodDescription:
