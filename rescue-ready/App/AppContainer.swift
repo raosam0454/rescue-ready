@@ -63,6 +63,17 @@ final class AppContainer {
         )
     }
 
+    func makeSafetyCheckViewModel(for batch: FoodBatch) -> SafetyCheckViewModel {
+        let scheduleExpiryAlert = ScheduleExpiryAlertUseCase(batches: batchRepository,
+                                                             notifications: notificationScheduler, now: now)
+        return SafetyCheckViewModel(
+            batch: batch,
+            recordCheck: RecordSafetyCheckUseCase(batches: batchRepository,
+                                                  scheduleExpiryAlert: scheduleExpiryAlert, now: now),
+            now: now
+        )
+    }
+
     func makeHandoverViewModel(for batch: FoodBatch) -> HandoverViewModel {
         HandoverViewModel(
             batch: batch,
