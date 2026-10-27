@@ -22,6 +22,7 @@ struct RootView: View {
     private var tabs: some View {
         TabView {
             BatchListView(viewModel: container.makeBatchListViewModel(),
+                          makeSafetyCheckViewModel: container.makeSafetyCheckViewModel,
                           makeHandoverViewModel: container.makeHandoverViewModel)
                 .tabItem { Label("Batches", systemImage: "tray.full") }
 
@@ -30,20 +31,6 @@ struct RootView: View {
 
             ImpactDashboardView(viewModel: container.makeImpactViewModel())
                 .tabItem { Label("Impact", systemImage: "chart.bar") }
-        }
-    }
-}
-
-/// Temporary tab content until the feature's own screen is merged.
-private struct UpcomingFeatureView: View {
-    let title: String
-    let systemImage: String
-    let message: String
-
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(title, systemImage: systemImage, description: Text(message))
-                .navigationTitle(title)
         }
     }
 }
