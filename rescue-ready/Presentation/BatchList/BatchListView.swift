@@ -3,10 +3,14 @@ import SwiftUI
 /// Open batches, soonest safe hold deadline first, with the time left on each.
 struct BatchListView: View {
     @State private var viewModel: BatchListViewModel
+    private let makeSafetyCheckViewModel: (FoodBatch) -> SafetyCheckViewModel
     private let makeHandoverViewModel: (FoodBatch) -> HandoverViewModel
 
-    init(viewModel: BatchListViewModel, makeHandoverViewModel: @escaping (FoodBatch) -> HandoverViewModel) {
+    init(viewModel: BatchListViewModel,
+         makeSafetyCheckViewModel: @escaping (FoodBatch) -> SafetyCheckViewModel,
+         makeHandoverViewModel: @escaping (FoodBatch) -> HandoverViewModel) {
         _viewModel = State(initialValue: viewModel)
+        self.makeSafetyCheckViewModel = makeSafetyCheckViewModel
         self.makeHandoverViewModel = makeHandoverViewModel
     }
 
@@ -76,15 +80,32 @@ struct BatchListView: View {
     private func rows(_ items: [ExpiringBatch]) -> some View {
         ForEach(items) { item in
             NavigationLink {
-                // Reload when done so the handed over or discarded batch leaves the list.
-                HandoverView(viewModel: makeHandoverViewModel(item.batch)) {
-                    Task { await viewModel.load() }
-                }
+                destination(for: item)
             } label: {
                 // Redraws every minute so the time left stays current while the screen is open.
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     BatchRow(batch: item.batch, timeRemaining: item.batch.holdWindow.remaining(at: context.date))
                 }
+            }
+        }
+    }
+}
+
+// MARK: - Navigation
+
+extension BatchListView {
+    /// Batches awaiting a check open the safety check. Everything else opens handover,
+    /// which also handles discarding failed or expired batches.
+    /// Both reload the list when done so the batch's new status shows.
+    @ViewBuilder
+    fileprivate func destination(for item: ExpiringBatch) -> some View {
+        if item.batch.status == .awaitingCheck && !item.hasExpired {
+            SafetyCheckView(viewModel: makeSafetyCheckViewModel(item.batch)) {
+                Task { await viewModel.load() }
+            }
+        } else {
+            HandoverView(viewModel: makeHandoverViewModel(item.batch)) {
+                Task { await viewModel.load() }
             }
         }
     }
@@ -177,12 +198,16 @@ private struct NotificationsDeniedBanner: View {
 
 #Preview("Batches") {
     let container = AppContainer.preview()
-    BatchListView(viewModel: .preview(), makeHandoverViewModel: container.makeHandoverViewModel)
+    BatchListView(viewModel: .preview(),
+                  makeSafetyCheckViewModel: container.makeSafetyCheckViewModel,
+                  makeHandoverViewModel: container.makeHandoverViewModel)
 }
 
 #Preview("Alerts off") {
     let container = AppContainer.preview()
-    BatchListView(viewModel: .preview(permission: .denied), makeHandoverViewModel: container.makeHandoverViewModel)
+    BatchListView(viewModel: .preview(permission: .denied),
+                  makeSafetyCheckViewModel: container.makeSafetyCheckViewModel,
+                  makeHandoverViewModel: container.makeHandoverViewModel)
         .preferredColorScheme(.dark)
 }
 
