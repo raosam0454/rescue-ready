@@ -55,6 +55,12 @@ final class PickupViewModel {
         }
     }
 
+    /// Reloads events after one is created, and selects it.
+    func eventCreated(_ event: Event) async {
+        selectedEventID = event.id
+        await load()
+    }
+
     func addBatch(_ batch: NewBatch) {
         batches.append(batch)
     }
