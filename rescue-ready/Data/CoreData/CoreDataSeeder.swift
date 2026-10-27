@@ -1,8 +1,18 @@
 import CoreData
 import Foundation
 
-/// Fills an empty store with `SampleData` so the app has realistic content on first launch.
+/// Prepares the store on launch: the volunteer's own record, plus sample data in debug builds.
 enum CoreDataSeeder {
+    /// Makes sure the device's volunteer exists, so pickups can be saved against them.
+    /// Does nothing if they already exist.
+    static func ensureVolunteer(_ volunteer: Volunteer, in container: NSPersistentContainer) async throws {
+        try await container.performBackground(failure: .saveFailed) { context in
+            guard try context.fetchOne(VolunteerEntity.self, id: volunteer.id.rawValue) == nil else { return }
+            VolunteerEntity(context: context).update(from: volunteer)
+            try context.save()
+        }
+    }
+
     /// Inserts sample data only when the store has no events. Returns true if it seeded.
     @discardableResult
     static func seedIfEmpty(_ container: NSPersistentContainer, now: Date = Date()) async throws -> Bool {
