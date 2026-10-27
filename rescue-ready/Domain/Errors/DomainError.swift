@@ -14,6 +14,7 @@ enum DomainError: Error, Equatable, LocalizedError {
     case temperatureOutOfRange
     case exceededSafeHoldTime
     case allergensUndeclared
+    case alreadyChecked
 
     // Handover and discard
     case batchNotFound
@@ -49,6 +50,8 @@ enum DomainError: Error, Equatable, LocalizedError {
             return "This batch has been out for more than 4 hours and must be discarded."
         case .allergensUndeclared:
             return "Confirm the allergens for this batch before it can be cleared."
+        case .alreadyChecked:
+            return "This batch has already been checked."
         case .batchNotFound:
             return "This batch could not be found."
         case .batchNotCleared:
