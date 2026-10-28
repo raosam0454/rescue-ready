@@ -9,6 +9,17 @@ enum SampleData {
         name: "Priya Sharma"
     )
 
+    /// Example drop points, loaded in every build so a batch can always be handed over.
+    /// Fixed IDs so they match across launches and across seeding steps.
+    static let dropPoints: [DropPoint] = [
+        DropPoint(id: Identifier(UUID(uuidString: "2B7E4C1A-8D3F-4A6B-9C21-5E0F7A3D9B14") ?? UUID()),
+                  name: "Redfern Community Kitchen",
+                  address: "12 Regent St, Redfern NSW 2016", openingHours: 7...21),
+        DropPoint(id: Identifier(UUID(uuidString: "9A1D6F3E-4C2B-4E8A-B7D5-0F3C8E2A6D47") ?? UUID()),
+                  name: "Parramatta Neighbourhood Pantry",
+                  address: "48 Church St, Parramatta NSW 2150", openingHours: 9...17),
+    ]
+
     /// A store filled with sample events, drop points, a pickup and batches.
     /// Times are relative to `now` so batches always show realistic time left.
     static func makeStore(now: Date = Date()) -> InMemoryDataStore {
@@ -36,11 +47,9 @@ enum SampleData {
                            endsAt: now.addingTimeInterval(3 * hour))
         for event in [match, summit] { store.events[event.id] = event }
 
-        let redfern = DropPoint(id: Identifier(), name: "Redfern Community Kitchen",
-                                address: "12 Regent St, Redfern NSW 2016", openingHours: 7...21)
-        let parramatta = DropPoint(id: Identifier(), name: "Parramatta Neighbourhood Pantry",
-                                   address: "48 Church St, Parramatta NSW 2150", openingHours: 9...17)
-        for dropPoint in [redfern, parramatta] { store.dropPoints[dropPoint.id] = dropPoint }
+        let redfern = dropPoints[0]
+        let parramatta = dropPoints[1]
+        for dropPoint in dropPoints { store.dropPoints[dropPoint.id] = dropPoint }
 
         let pickup = Pickup(id: Identifier(), eventID: match.id, volunteerID: volunteer.id,
                             collectedAt: now.addingTimeInterval(-1.5 * hour))
