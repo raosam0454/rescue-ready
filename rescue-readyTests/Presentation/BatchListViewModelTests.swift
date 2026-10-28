@@ -26,7 +26,9 @@ struct BatchListViewModelTests {
         let fixedNow = now
         return BatchListViewModel(
             fetchExpiringBatches: FetchExpiringBatchesUseCase(batches: batches, now: { fixedNow }),
-            notifications: InMemoryNotificationScheduler(permission: permission)
+            checkAlertPermission: CheckAlertPermissionUseCase(
+                notifications: InMemoryNotificationScheduler(permission: permission)
+            )
         )
     }
 

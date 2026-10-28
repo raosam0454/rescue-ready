@@ -60,7 +60,7 @@ final class AppContainer {
     func makeBatchListViewModel() -> BatchListViewModel {
         BatchListViewModel(
             fetchExpiringBatches: FetchExpiringBatchesUseCase(batches: batchRepository, now: now),
-            notifications: notificationScheduler
+            checkAlertPermission: CheckAlertPermissionUseCase(notifications: notificationScheduler)
         )
     }
 
