@@ -42,13 +42,14 @@ final class AppContainer {
 
     /// Prepares the store on launch.
     ///
-    /// Every build creates the volunteer's own record. Debug builds also load sample events,
-    /// drop points and batches for development and demos; release builds start empty, and
-    /// volunteers create their own events.
+    /// Every build creates the volunteer's own record and the drop points, so pickups can be
+    /// logged and handed over. Debug builds also load sample events and batches for development
+    /// and demos; in release builds volunteers create their own events.
     func prepare() async {
         guard persistence.isAvailable else { return }
         try? await CoreDataSeeder.ensureVolunteer(Volunteer(id: currentVolunteerID, name: "Volunteer"),
                                                   in: persistence.container)
+        _ = try? await CoreDataSeeder.ensureDropPoints(SampleData.dropPoints, in: persistence.container)
         #if DEBUG
         _ = try? await CoreDataSeeder.seedIfEmpty(persistence.container, now: now())
         #endif
