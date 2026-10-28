@@ -26,7 +26,8 @@ struct RootView: View {
                           makeHandoverViewModel: container.makeHandoverViewModel)
                 .tabItem { Label("Batches", systemImage: "tray.full") }
 
-            PickupLogView(viewModel: container.makePickupViewModel())
+            PickupLogView(viewModel: container.makePickupViewModel(),
+                          makeNewEventViewModel: container.makeNewEventViewModel)
                 .tabItem { Label("Log Pickup", systemImage: "plus.circle") }
 
             ImpactDashboardView(viewModel: container.makeImpactViewModel())

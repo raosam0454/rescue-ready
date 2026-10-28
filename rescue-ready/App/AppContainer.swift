@@ -40,10 +40,19 @@ final class AppContainer {
         notificationScheduler = UNNotificationScheduler()
     }
 
-    /// Seeds an empty store with sample data so the app has content on first launch.
+    /// Prepares the store on launch.
+    ///
+    /// Every build creates the volunteer's own record and the drop points, so pickups can be
+    /// logged and handed over. Debug builds also load sample events and batches for development
+    /// and demos; in release builds volunteers create their own events.
     func prepare() async {
         guard persistence.isAvailable else { return }
+        try? await CoreDataSeeder.ensureVolunteer(Volunteer(id: currentVolunteerID, name: "Volunteer"),
+                                                  in: persistence.container)
+        _ = try? await CoreDataSeeder.ensureDropPoints(SampleData.dropPoints, in: persistence.container)
+        #if DEBUG
         _ = try? await CoreDataSeeder.seedIfEmpty(persistence.container, now: now())
+        #endif
     }
 
     // MARK: - ViewModel factories
@@ -61,6 +70,10 @@ final class AppContainer {
             fetchActiveEvents: FetchActiveEventsUseCase(events: eventRepository, now: now),
             volunteerID: currentVolunteerID
         )
+    }
+
+    func makeNewEventViewModel() -> NewEventViewModel {
+        NewEventViewModel(createEvent: CreateEventUseCase(events: eventRepository, now: now), now: now)
     }
 
     func makeSafetyCheckViewModel(for batch: FoodBatch) -> SafetyCheckViewModel {

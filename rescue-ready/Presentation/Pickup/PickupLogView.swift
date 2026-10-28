@@ -4,9 +4,12 @@ import SwiftUI
 struct PickupLogView: View {
     @State private var viewModel: PickupViewModel
     @State private var isAddingBatch = false
+    @State private var isCreatingEvent = false
+    private let makeNewEventViewModel: () -> NewEventViewModel
 
-    init(viewModel: PickupViewModel) {
+    init(viewModel: PickupViewModel, makeNewEventViewModel: @escaping () -> NewEventViewModel) {
         _viewModel = State(initialValue: viewModel)
+        self.makeNewEventViewModel = makeNewEventViewModel
     }
 
     var body: some View {
@@ -14,8 +17,22 @@ struct PickupLogView: View {
             content
                 .navigationTitle("Log Pickup")
                 .task { await viewModel.load() }
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            isCreatingEvent = true
+                        } label: {
+                            Label("New Event", systemImage: "calendar.badge.plus")
+                        }
+                    }
+                }
                 .sheet(isPresented: $isAddingBatch) {
                     AddBatchView { viewModel.addBatch($0) }
+                }
+                .sheet(isPresented: $isCreatingEvent) {
+                    NewEventView(viewModel: makeNewEventViewModel()) { event in
+                        Task { await viewModel.eventCreated(event) }
+                    }
                 }
                 .alert("Pickup saved", isPresented: isShowingSaved) {
                     Button("OK") { viewModel.dismissSaveResult() }
@@ -45,11 +62,14 @@ struct PickupLogView: View {
                 Button("Try Again") { Task { await viewModel.load() } }
             }
         case .loaded where viewModel.events.isEmpty:
-            ContentUnavailableView(
-                "No active events",
-                systemImage: "calendar.badge.exclamationmark",
-                description: Text("Pickups can be logged from the start of an event until 3 hours after it ends.")
-            )
+            ContentUnavailableView {
+                Label("No active events", systemImage: "calendar.badge.exclamationmark")
+            } description: {
+                Text("Create the event you're collecting from. Pickups can be logged from its start until 3 hours after it ends.")
+            } actions: {
+                Button("Create Event") { isCreatingEvent = true }
+                    .buttonStyle(.borderedProminent)
+            }
         case .loaded:
             form
         }
@@ -161,5 +181,7 @@ private struct BatchDraftRow: View {
 }
 
 #Preview {
-    PickupLogView(viewModel: AppContainer.preview().makePickupViewModel())
+    let container = AppContainer.preview()
+    PickupLogView(viewModel: container.makePickupViewModel(),
+                  makeNewEventViewModel: container.makeNewEventViewModel)
 }
