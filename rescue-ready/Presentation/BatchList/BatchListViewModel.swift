@@ -18,11 +18,11 @@ final class BatchListViewModel {
     private(set) var notificationsDenied = false
 
     private let fetchExpiringBatches: FetchExpiringBatchesUseCase
-    private let notifications: NotificationScheduling
+    private let checkAlertPermission: CheckAlertPermissionUseCase
 
-    init(fetchExpiringBatches: FetchExpiringBatchesUseCase, notifications: NotificationScheduling) {
+    init(fetchExpiringBatches: FetchExpiringBatchesUseCase, checkAlertPermission: CheckAlertPermissionUseCase) {
         self.fetchExpiringBatches = fetchExpiringBatches
-        self.notifications = notifications
+        self.checkAlertPermission = checkAlertPermission
     }
 
     func load() async {
@@ -33,7 +33,7 @@ final class BatchListViewModel {
         } catch {
             loadState = .failed(Self.message(for: error))
         }
-        notificationsDenied = await notifications.permission() == .denied
+        notificationsDenied = await checkAlertPermission.alertsAreOff()
     }
 
     private static func message(for error: Error) -> String {

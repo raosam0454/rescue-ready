@@ -219,7 +219,9 @@ extension BatchListViewModel {
         return BatchListViewModel(
             fetchExpiringBatches: FetchExpiringBatchesUseCase(batches: InMemoryBatchRepository(store: store),
                                                               now: { now }),
-            notifications: InMemoryNotificationScheduler(permission: permission)
+            checkAlertPermission: CheckAlertPermissionUseCase(
+                notifications: InMemoryNotificationScheduler(permission: permission)
+            )
         )
     }
 }
