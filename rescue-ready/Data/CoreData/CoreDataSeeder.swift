@@ -1,9 +1,39 @@
 import CoreData
 import Foundation
 
-/// Fills an empty store with `SampleData` so the app has realistic content on first launch.
+/// Prepares the store on launch: the volunteer's own record and drop points in every build,
+/// plus sample events and batches in debug builds.
 enum CoreDataSeeder {
+    /// Makes sure the device's volunteer exists, so pickups can be saved against them.
+    /// Does nothing if they already exist.
+    static func ensureVolunteer(_ volunteer: Volunteer, in container: NSPersistentContainer) async throws {
+        try await container.performBackground(failure: .saveFailed) { context in
+            guard try context.fetchOne(VolunteerEntity.self, id: volunteer.id.rawValue) == nil else { return }
+            VolunteerEntity(context: context).update(from: volunteer)
+            try context.save()
+        }
+    }
+
+    /// Adds the given drop points when the store has none yet. Returns true if it added them.
+    @discardableResult
+    static func ensureDropPoints(_ dropPoints: [DropPoint], in container: NSPersistentContainer) async throws -> Bool {
+        try await container.performBackground(failure: .saveFailed) { context in
+            let existing = NSFetchRequest<DropPointEntity>(entityName: "DropPointEntity")
+            guard try context.count(for: existing) == 0 else { return false }
+            for dropPoint in dropPoints {
+                DropPointEntity(context: context).update(from: dropPoint)
+            }
+            try context.save()
+            return true
+        }
+    }
+
     /// Inserts sample data only when the store has no events. Returns true if it seeded.
+    ///
+    /// The volunteer and drop points may already exist from `ensureVolunteer` and
+    /// `ensureDropPoints`, so they are reused rather than inserted again. Inserting a
+    /// duplicate ID would let the uniqueness constraint merge the records and could leave
+    /// pickups and batches linked to the discarded copy.
     @discardableResult
     static func seedIfEmpty(_ container: NSPersistentContainer, now: Date = Date()) async throws -> Bool {
         let sample = SampleData.makeStore(now: now)
@@ -21,14 +51,16 @@ enum CoreDataSeeder {
 
             var volunteers: [UUID: VolunteerEntity] = [:]
             for volunteer in sample.volunteers.values {
-                let entity = VolunteerEntity(context: context)
+                let entity = try context.fetchOne(VolunteerEntity.self, id: volunteer.id.rawValue)
+                    ?? VolunteerEntity(context: context)
                 entity.update(from: volunteer)
                 volunteers[volunteer.id.rawValue] = entity
             }
 
             var dropPoints: [UUID: DropPointEntity] = [:]
             for dropPoint in sample.dropPoints.values {
-                let entity = DropPointEntity(context: context)
+                let entity = try context.fetchOne(DropPointEntity.self, id: dropPoint.id.rawValue)
+                    ?? DropPointEntity(context: context)
                 entity.update(from: dropPoint)
                 dropPoints[dropPoint.id.rawValue] = entity
             }

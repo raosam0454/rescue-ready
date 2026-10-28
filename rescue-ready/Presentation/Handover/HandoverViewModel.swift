@@ -56,11 +56,15 @@ final class HandoverViewModel {
     /// Why this batch can't be handed over, or nil if it can.
     /// The use case enforces the same rules; this lets the screen explain them up front.
     var handoverBlockedReason: String? {
+        // Running out of time is the most urgent reason, so it is shown first,
+        // including for batches that were never checked.
+        let isExpired = batch.holdWindow.hasExpired(at: now())
+
         switch batch.status {
+        case .cleared where isExpired, .awaitingCheck where isExpired:
+            return "This batch has been out for more than 4 hours and must be discarded."
         case .cleared:
-            return batch.holdWindow.hasExpired(at: now())
-                ? "This batch has been out for more than 4 hours and must be discarded."
-                : nil
+            return nil
         case .awaitingCheck:
             return "This batch needs to pass a safety check before it can be handed over."
         case .failedCheck:

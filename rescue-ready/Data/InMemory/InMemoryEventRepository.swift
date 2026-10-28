@@ -20,4 +20,9 @@ final class InMemoryEventRepository: EventRepository {
             .filter { $0.acceptsPickups(at: date) }
             .sorted { $0.startsAt < $1.startsAt }
     }
+
+    func save(_ event: Event) async throws {
+        if shouldFail { throw RepositoryError.saveFailed }
+        store.events[event.id] = event
+    }
 }

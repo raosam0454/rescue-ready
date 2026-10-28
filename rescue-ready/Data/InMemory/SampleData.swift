@@ -9,6 +9,17 @@ enum SampleData {
         name: "Priya Sharma"
     )
 
+    /// Example drop points, loaded in every build so a batch can always be handed over.
+    /// Fixed IDs so they match across launches and across seeding steps.
+    static let dropPoints: [DropPoint] = [
+        DropPoint(id: Identifier(UUID(uuidString: "2B7E4C1A-8D3F-4A6B-9C21-5E0F7A3D9B14") ?? UUID()),
+                  name: "Redfern Community Kitchen",
+                  address: "12 Regent St, Redfern NSW 2016", openingHours: 7...21),
+        DropPoint(id: Identifier(UUID(uuidString: "9A1D6F3E-4C2B-4E8A-B7D5-0F3C8E2A6D47") ?? UUID()),
+                  name: "Parramatta Neighbourhood Pantry",
+                  address: "48 Church St, Parramatta NSW 2150", openingHours: 9...17),
+    ]
+
     /// A store filled with sample events, drop points, a pickup and batches.
     /// Times are relative to `now` so batches always show realistic time left.
     static func makeStore(now: Date = Date()) -> InMemoryDataStore {
@@ -36,11 +47,9 @@ enum SampleData {
                            endsAt: now.addingTimeInterval(3 * hour))
         for event in [match, summit] { store.events[event.id] = event }
 
-        let redfern = DropPoint(id: Identifier(), name: "Redfern Community Kitchen",
-                                address: "12 Regent St, Redfern NSW 2016", openingHours: 7...21)
-        let parramatta = DropPoint(id: Identifier(), name: "Parramatta Neighbourhood Pantry",
-                                   address: "48 Church St, Parramatta NSW 2150", openingHours: 9...17)
-        for dropPoint in [redfern, parramatta] { store.dropPoints[dropPoint.id] = dropPoint }
+        let redfern = dropPoints[0]
+        let parramatta = dropPoints[1]
+        for dropPoint in dropPoints { store.dropPoints[dropPoint.id] = dropPoint }
 
         let pickup = Pickup(id: Identifier(), eventID: match.id, volunteerID: volunteer.id,
                             collectedAt: now.addingTimeInterval(-1.5 * hour))
@@ -62,5 +71,48 @@ enum SampleData {
                       holdWindow: collected, status: .handedOver, dropPointID: redfern.id)
         ]
         for batch in batches { store.batches[batch.id] = batch }
+
+        try populateHistory(store, now: now, dropPoints: [redfern, parramatta])
+    }
+
+    /// Earlier rescues, so the Impact dashboard shows a realistic track record.
+    private static func populateHistory(_ store: InMemoryDataStore, now: Date, dropPoints: [DropPoint]) throws {
+        let day: TimeInterval = 24 * 60 * 60
+        guard dropPoints.count == 2 else { return }
+        let redfern = dropPoints[0]
+        let parramatta = dropPoints[1]
+
+        let gala = Event(id: Identifier(), name: "Charity Gala Dinner", venue: "Hilton Sydney",
+                         startsAt: now.addingTimeInterval(-3 * day), endsAt: now.addingTimeInterval(-3 * day + 4 * 3600))
+        let concert = Event(id: Identifier(), name: "Summer Concert Series", venue: "The Domain, Sydney",
+                            startsAt: now.addingTimeInterval(-6 * day), endsAt: now.addingTimeInterval(-6 * day + 5 * 3600))
+        for event in [gala, concert] { store.events[event.id] = event }
+
+        let galaPickup = Pickup(id: Identifier(), eventID: gala.id, volunteerID: volunteer.id,
+                                collectedAt: gala.endsAt.addingTimeInterval(1800))
+        let concertPickup = Pickup(id: Identifier(), eventID: concert.id, volunteerID: volunteer.id,
+                                   collectedAt: concert.endsAt.addingTimeInterval(1800))
+        for pickup in [galaPickup, concertPickup] { store.pickups[pickup.id] = pickup }
+
+        let galaWindow = HoldWindow(startedAt: galaPickup.collectedAt)
+        let concertWindow = HoldWindow(startedAt: concertPickup.collectedAt)
+        let history = [
+            FoodBatch(id: Identifier(), pickupID: galaPickup.id, foodDescription: "Roast vegetable lasagne",
+                      weight: try Weight(kilograms: 14), allergens: [.wheat, .milk, .egg], allergensDeclared: true,
+                      holdWindow: galaWindow, status: .handedOver, dropPointID: redfern.id),
+            FoodBatch(id: Identifier(), pickupID: galaPickup.id, foodDescription: "Bread rolls",
+                      weight: try Weight(kilograms: 4.5), allergens: [.wheat, .gluten], allergensDeclared: true,
+                      holdWindow: galaWindow, status: .handedOver, dropPointID: parramatta.id),
+            FoodBatch(id: Identifier(), pickupID: galaPickup.id, foodDescription: "Prawn cocktail cups",
+                      weight: try Weight(kilograms: 2), allergens: [.crustacean, .egg], allergensDeclared: true,
+                      holdWindow: galaWindow, status: .discarded, discardReason: "Held above 5°C for too long"),
+            FoodBatch(id: Identifier(), pickupID: concertPickup.id, foodDescription: "Beef and black bean stir-fry",
+                      weight: try Weight(kilograms: 10), allergens: [.soy, .wheat], allergensDeclared: true,
+                      holdWindow: concertWindow, status: .handedOver, dropPointID: parramatta.id),
+            FoodBatch(id: Identifier(), pickupID: concertPickup.id, foodDescription: "Fruit platters",
+                      weight: try Weight(kilograms: 6), allergens: [], allergensDeclared: true,
+                      holdWindow: concertWindow, status: .handedOver, dropPointID: redfern.id)
+        ]
+        for batch in history { store.batches[batch.id] = batch }
     }
 }

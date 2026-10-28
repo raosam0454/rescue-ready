@@ -23,10 +23,11 @@ struct HandoverViewModelTests {
         store.dropPoints[closedPantry.id] = closedPantry
     }
 
-    private func makeViewModel(status: BatchStatus) throws -> HandoverViewModel {
+    private func makeViewModel(status: BatchStatus, collectedHoursAgo: Double = 1) throws -> HandoverViewModel {
         let batch = FoodBatch(id: Identifier(), pickupID: Identifier(), foodDescription: "Vegetable fried rice",
                               weight: try Weight(kilograms: 8), allergens: [.soy], allergensDeclared: true,
-                              holdWindow: HoldWindow(startedAt: now.addingTimeInterval(-3600)), status: status)
+                              holdWindow: HoldWindow(startedAt: now.addingTimeInterval(-collectedHoursAgo * 3600)),
+                              status: status)
         store.batches[batch.id] = batch
 
         let dropPoints = InMemoryDropPointRepository(store: store)
@@ -118,5 +119,30 @@ struct HandoverViewModelTests {
 
         viewModel.dismissError()
         #expect(viewModel.canHandOver)
+    }
+
+    @Test(arguments: [BatchStatus.awaitingCheck, .cleared])
+    func explainsExpiryBeforeAnythingElse(status: BatchStatus) async throws {
+        let viewModel = try makeViewModel(status: status, collectedHoursAgo: 5)
+        await viewModel.load()
+
+        #expect(viewModel.handoverBlockedReason
+                == "This batch has been out for more than 4 hours and must be discarded.")
+        #expect(!viewModel.canHandOver)
+    }
+
+    @Test func unexpiredBatchAwaitingCheckStillAsksForACheck() async throws {
+        let viewModel = try makeViewModel(status: .awaitingCheck)
+        await viewModel.load()
+
+        #expect(viewModel.handoverBlockedReason
+                == "This batch needs to pass a safety check before it can be handed over.")
+    }
+
+    @Test func unexpiredClearedBatchCanStillBeHandedOver() async throws {
+        let viewModel = try makeViewModel(status: .cleared)
+        await viewModel.load()
+
+        #expect(viewModel.handoverBlockedReason == nil)
     }
 }

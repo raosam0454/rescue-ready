@@ -5,6 +5,10 @@ enum DomainError: Error, Equatable, LocalizedError {
     // Pickup
     case eventNotFound
     case eventNotActive
+    case missingEventName
+    case missingVenue
+    case invalidEventTimes
+    case eventAlreadyFinished
     case noBatches
     case missingFoodDescription
     case invalidWeight
@@ -14,6 +18,7 @@ enum DomainError: Error, Equatable, LocalizedError {
     case temperatureOutOfRange
     case exceededSafeHoldTime
     case allergensUndeclared
+    case alreadyChecked
 
     // Handover and discard
     case batchNotFound
@@ -35,6 +40,14 @@ enum DomainError: Error, Equatable, LocalizedError {
             return "This event could not be found."
         case .eventNotActive:
             return "This event isn't accepting pickups right now."
+        case .missingEventName:
+            return "Enter the event's name."
+        case .missingVenue:
+            return "Enter where the event is."
+        case .invalidEventTimes:
+            return "The event must end after it starts and last no more than 24 hours."
+        case .eventAlreadyFinished:
+            return "This event finished more than 3 hours ago, so pickups can no longer be logged for it."
         case .noBatches:
             return "Add at least one batch before saving the pickup."
         case .missingFoodDescription:
@@ -49,6 +62,8 @@ enum DomainError: Error, Equatable, LocalizedError {
             return "This batch has been out for more than 4 hours and must be discarded."
         case .allergensUndeclared:
             return "Confirm the allergens for this batch before it can be cleared."
+        case .alreadyChecked:
+            return "This batch has already been checked."
         case .batchNotFound:
             return "This batch could not be found."
         case .batchNotCleared:
